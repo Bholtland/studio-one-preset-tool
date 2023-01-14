@@ -1,39 +1,45 @@
-function getFileData(filePath, converter) {
-  	const fileXml = fs.readFileSync(filePath, "utf-8");
-	  const file = JSON.parse(convert.xml2json(fileXml));
+import fs from "fs";
+import convert from "xml-js";
 
-    return converter(file)
+function getFileData(filePath, converter) {
+	const fileXml = fs.readFileSync(filePath, "utf-8");
+	const file = JSON.parse(convert.xml2json(fileXml));
+
+	return converter(file);
 }
 
 export function getSongData() {
-  function convert(file) {
-    return file.elements[0].elements[0].elements[1].elements.reduce((acc, track) => {
-			if (!acc[track.name]) {
-				acc[track.name] = {};
-			}
+	function convert(file) {
+		return file.elements[0].elements[0].elements[1].elements.reduce(
+			(acc, track) => {
+				if (!acc[track.name]) {
+					acc[track.name] = {};
+				}
 
-			const trackId =
-				track.name === "MediaTrack"
-					? track.elements[0].attributes.uid
-					: track.attributes.trackID;
+				const trackId =
+					track.name === "MediaTrack"
+						? track.elements[0].attributes.uid
+						: track.attributes.trackID;
 
-			acc[track.name][trackId] = track.attributes;
+				acc[track.name][trackId] = track.attributes;
 
-			return acc;
-		}, {})
-  }
+				return acc;
+			},
+			{}
+		);
+	}
 
-  return getFileData(`${process.env}/Song/song.xml`, convert)
+	return getFileData(`./songContents/Song/song.xml`, convert);
 }
 
 export function getAudioSynthFolderData() {
-  function convert(file) {
-    return file.elements[0].elements.reduce((acc, track) => {
-			if (!track.elements) {
+	function convert(file) {
+		return file.elements[0].elements.reduce((acc, track) => {
+			if (!track.elements?.length || !track.elements[6].elements?.length) {
 				return acc;
 			}
 
-			const musicTrackDeviceId = track.elements[6].elements[0].attributes.uid;
+			const musicTrackDeviceId = track.elements[6].elements[0]?.attributes?.uid;
 
 			acc[musicTrackDeviceId] = {
 				musicTrackDeviceId,
@@ -50,14 +56,14 @@ export function getAudioSynthFolderData() {
 
 			return acc;
 		}, {});
-  }
+	}
 
-  return getFileData(`${process.env}/Devices/audiosynthfolder.xml`, convert)
+	return getFileData(`./songContents/Devices/audiosynthfolder.xml`, convert);
 }
 
 export function getMusicTrackDeviceData() {
-  function convert(file) {
-    return file.elements[0].elements[0].elements[0].elements.reduce(
+	function convert(file) {
+		return file.elements[0].elements[0].elements[0].elements.reduce(
 			(acc, track) => {
 				const musicTrackDeviceId =
 					track.elements[0].attributes?.objectID?.match(/(.*)\/Input/)?.[1];
@@ -76,9 +82,9 @@ export function getMusicTrackDeviceData() {
 			},
 			{}
 		);
-  }
+	}
 
-  return getFileData(`${process.env}/Devices/musictrackdevice.xml`, convert)
+	return getFileData(`./songContents/Devices/musictrackdevice.xml`, convert);
 }
 
 export function getProjectStructure() {
@@ -88,7 +94,6 @@ export function getProjectStructure() {
 		musicTrackDeviceData: getMusicTrackDeviceData(),
 	};
 }
-
 
 export function combineData(jsonStructure) {
 	const combined = Object.values(jsonStructure.audioSynthFolderData).reduce(
