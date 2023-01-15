@@ -2,13 +2,15 @@ import fs from "fs";
 import zipper from "zip-local";
 import convert from "xml-js";
 
-export function createPreset(preset, jsonStructure) {
+export function createPreset(preset, jsonStructure, config) {
 	return new Promise((resolve, reject) => {
-		fs.mkdirSync(`./temp/${preset.songId}`, { recursive: true });
+		fs.mkdirSync(`${config.in.path}/temp/${preset.songId}`, {
+			recursive: true,
+		});
 
 		fs.copyFileSync(
-			`./songContents/${preset.presetPath}`,
-			`./temp/${preset.songId}/${preset.presetFileName}`
+			`${config.in.path}/songContents/${preset.presetPath}`,
+			`${config.in.path}/temp/${preset.songId}/${preset.presetFileName}`
 		);
 
 		const metainfo = getMetaInfo(preset);
@@ -16,7 +18,10 @@ export function createPreset(preset, jsonStructure) {
 			indentAttributes: true,
 			indentCdata: true,
 		});
-		fs.writeFileSync(`./temp/${preset.songId}/metainfo.xml`, metainfoXml);
+		fs.writeFileSync(
+			`${config.in.path}/temp/${preset.songId}/metainfo.xml`,
+			metainfoXml
+		);
 
 		const presetParts = getPresetParts(preset);
 		const presetPartsXml = convert.js2xml(presetParts, {
@@ -24,9 +29,12 @@ export function createPreset(preset, jsonStructure) {
 			indentCdata: true,
 		});
 
-		fs.writeFileSync(`./temp/${preset.songId}/presetparts.xml`, presetPartsXml);
+		fs.writeFileSync(
+			`${config.in.path}/temp/${preset.songId}/presetparts.xml`,
+			presetPartsXml
+		);
 
-		const folderStructure = `./exported/${getFolderStructure(
+		const folderStructure = `${config.out.path}/${getFolderStructure(
 			preset,
 			jsonStructure
 		).join("/")}`;
@@ -36,7 +44,7 @@ export function createPreset(preset, jsonStructure) {
 		}
 
 		zipper.sync
-			.zip(`./temp/${preset.songId}`)
+			.zip(`${config.in.path}/temp/${preset.songId}`)
 			.compress()
 			.save(
 				`${folderStructure}/${preset.name.replace('"', " inch")}.instrument`

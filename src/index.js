@@ -2,38 +2,66 @@ import decompress from "decompress";
 import { createPreset } from "./build.js";
 import { combineData, getProjectStructure } from "./parsing.js";
 import fs from "fs";
+import dotenv from "dotenv";
 
-async function extractProject() {
-	await decompress("./song.song", "./songContents");
+dotenv.config();
+
+function getConfig() {
+	const pathInMatch = process.env.IN_PATH.match(/(.*)\/(.*\.song)/);
+
+	if (!pathInMatch[1] && !pathInMatch[2]) {
+		throw Error("No valid in path set");
+	}
+
+	if (!process.env.OUT_PATH) {
+		throw Error("No valid out path set");
+	}
+
+	return {
+		in: {
+			path: pathInMatch[1],
+			fileName: pathInMatch[2],
+			full: process.env.IN_PATH,
+		},
+		out: {
+			path: process.env.OUT_PATH,
+		},
+	};
 }
 
-function cleanup() {
-	fs.rmSync("./temp", { recursive: true });
-	fs.rmSync("./songContents", { recursive: true });
+async function extractProject(config) {
+	await decompress(config.in.full, `${config.in.path}/songContents`);
 }
 
-async function buildPresets(combinedData, jsonStructure) {
+function cleanup(config) {
+	fs.rmSync(`${config.in.path}/temp`, { recursive: true });
+	fs.rmSync(`${config.in.path}/songContents`, { recursive: true });
+}
+
+async function buildPresets(combinedData, jsonStructure, config) {
 	// if (!fs.existsSync('./temp')) {}
 	// fs.mkdirSync('')
 
 	return await Promise.all(
 		Object.values(combinedData).map((preset) =>
-			createPreset(preset, jsonStructure)
+			createPreset(preset, jsonStructure, config)
 		)
 	);
 }
 
 async function main() {
-	await extractProject();
+	const config = getConfig();
 
-	const jsonStructure = getProjectStructure();
+	await extractProject(config);
+
+	const jsonStructure = getProjectStructure(config);
 	const combinedData = combineData(jsonStructure);
 
-	await buildPresets(combinedData, jsonStructure);
+	await buildPresets(combinedData, jsonStructure, config);
 
-	cleanup();
+	cleanup(config);
 
-	console.log(Object.entries(combinedData).length);
+	console.log(`Exported ${Object.entries(combinedData).length} presets.`);
 }
 
 main();

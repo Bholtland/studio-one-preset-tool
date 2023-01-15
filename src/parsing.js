@@ -8,7 +8,7 @@ function getFileData(filePath, converter) {
 	return converter(file);
 }
 
-export function getSongData() {
+export function getSongData(config) {
 	function convert(file) {
 		return file.elements[0].elements[0].elements[1].elements.reduce(
 			(acc, track) => {
@@ -29,10 +29,10 @@ export function getSongData() {
 		);
 	}
 
-	return getFileData(`./songContents/Song/song.xml`, convert);
+	return getFileData(`${config.in.path}/songContents/Song/song.xml`, convert);
 }
 
-export function getAudioSynthFolderData() {
+export function getAudioSynthFolderData(config) {
 	function convert(file) {
 		return file.elements[0].elements.reduce((acc, track) => {
 			if (!track.elements?.length || !track.elements[6].elements?.length) {
@@ -58,10 +58,13 @@ export function getAudioSynthFolderData() {
 		}, {});
 	}
 
-	return getFileData(`./songContents/Devices/audiosynthfolder.xml`, convert);
+	return getFileData(
+		`${config.in.path}/songContents/Devices/audiosynthfolder.xml`,
+		convert
+	);
 }
 
-export function getMusicTrackDeviceData() {
+export function getMusicTrackDeviceData(config) {
 	function convert(file) {
 		return file.elements[0].elements[0].elements[0].elements.reduce(
 			(acc, track) => {
@@ -84,14 +87,17 @@ export function getMusicTrackDeviceData() {
 		);
 	}
 
-	return getFileData(`./songContents/Devices/musictrackdevice.xml`, convert);
+	return getFileData(
+		`${config.in.path}/songContents/Devices/musictrackdevice.xml`,
+		convert
+	);
 }
 
-export function getProjectStructure() {
+export function getProjectStructure(config) {
 	return {
-		songData: getSongData(),
-		audioSynthFolderData: getAudioSynthFolderData(),
-		musicTrackDeviceData: getMusicTrackDeviceData(),
+		songData: getSongData(config),
+		audioSynthFolderData: getAudioSynthFolderData(config),
+		musicTrackDeviceData: getMusicTrackDeviceData(config),
 	};
 }
 
